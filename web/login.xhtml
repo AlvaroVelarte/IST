@@ -1,0 +1,33 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"      xmlns:h="http://xmlns.jcp.org/jsf/html">
+    <h:head>
+        <title>Login</title>
+    </h:head>
+    <h:body>
+        <center>
+            <br/>
+            <h:graphicImage  width="300" value="resources/images/libros.jpg" alt="libros"/>
+            <br/>
+            <h1>Tienda de libros</h1>              
+            <br/>    
+            <h2>Escribe el login y la palabra de paso:</h2>
+            <h:form>          
+                <h:panelGrid columns="2" cellspacing="20"> 
+                    <h:outputText value="Login:" />
+                    <h:inputText id="usernameInput" value="#{sesionMB.login}" />
+                    <h:outputText value="Password:" />
+                    <h:inputSecret id="passwordInput" value="#{sesionMB.password}"  />                   
+                </h:panelGrid>              
+                <h:panelGrid columns="3" cellspacing="30"> 
+                    <h:commandButton  value="Entrar"  action="#{sesionMB.login()}" />                                                          
+                    <h:commandButton   value="Cancelar" action="inicio" />                                     
+                    <h:commandButton   value="Usuario nuevo"  action="registro"/>                      
+                </h:panelGrid>       
+            </h:form>
+            <br/>
+            <i>IST: tienda de libros</i>
+        </center>
+    </h:body>
+</html>
+
