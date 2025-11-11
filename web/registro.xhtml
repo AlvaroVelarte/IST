@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html">
+<h:head>
+    <title>Registro</title>
+</h:head>
+<h:body>
+<h:link outcome="inicio" value="Volver al inicio" />
+<h1>Crear una cuenta</h1>
+<h:messages globalOnly="true" />
+<h:form>
+    <h:panelGrid columns="2">
+        <h:outputLabel for="nombre" value="Nombre" />
+        <h:inputText id="nombre" value="#{sesionMB.nombre}" required="true" />
+        <h:outputLabel for="mail" value="Correo" />
+        <h:inputText id="mail" value="#{sesionMB.mail}" required="true" />
+        <h:outputLabel for="direccion" value="Dirección" />
+        <h:inputTextarea id="direccion" value="#{sesionMB.direccion}" rows="3" />
+        <h:outputLabel for="login" value="Usuario" />
+        <h:inputText id="login" value="#{sesionMB.login}" required="true" />
+        <h:outputLabel for="password" value="Contraseña" />
+        <h:inputSecret id="password" value="#{sesionMB.passwordRegistro}" required="true" />
+        <h:outputLabel for="password2" value="Confirmar contraseña" />
+        <h:inputSecret id="password2" value="#{sesionMB.passwordConfirmacion}" required="true" />
+    </h:panelGrid>
+    <h:commandButton value="Registrarse" action="#{sesionMB.registrar}" />
+</h:form>
+</h:body>
+</html>

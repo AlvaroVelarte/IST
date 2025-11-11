@@ -25,6 +25,9 @@ src/main/webapp
 src/main/resources/META-INF/persistence.xml -> Unidad de persistencia tiendaPU
 
 db/tienda-schema.sql     -> DDL y datos iniciales de catálogo
+
+src/java                 -> Réplica de las entidades/EJB/managed bean originales (pre-Maven) mantenidos por compatibilidad
+web/                     -> Vistas JSF clásicas usadas por la versión Ant del proyecto
 ```
 
 ## Construcción

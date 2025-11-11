@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core">
+<h:head>
+    <title>Confirmar pedido</title>
+</h:head>
+<h:body>
+<h:link outcome="carroCompra" value="Volver al carro" />
+<h1>Confirmar pedido</h1>
+<h:messages globalOnly="true" />
+<h:form>
+    <h:dataTable value="#{sesionMB.librosEnCarro}" var="linea">
+        <h:column>
+            <f:facet name="header">Libro</f:facet>
+            <h:outputText value="#{linea.libro.titulo}" />
+        </h:column>
+        <h:column>
+            <f:facet name="header">Cantidad</f:facet>
+            <h:outputText value="#{linea.cantidad}" />
+        </h:column>
+        <h:column>
+            <f:facet name="header">Subtotal</f:facet>
+            <h:outputText value="#{linea.subtotal}">
+                <f:convertNumber type="currency" currencySymbol="€" />
+            </h:outputText>
+        </h:column>
+    </h:dataTable>
+    <p>Total: <strong>
+        <h:outputText value="#{sesionMB.totalCarro}">
+            <f:convertNumber type="currency" currencySymbol="€" />
+        </h:outputText>
+    </strong></p>
+    <h:commandButton value="Confirmar" action="#{sesionMB.confirmarPedido}" />
+    <h:commandButton value="Cancelar" action="#{sesionMB.cancelarConfirmacion}" immediate="true" />
+</h:form>
+</h:body>
+</html>

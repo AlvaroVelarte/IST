@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core">
+<h:head>
+    <title>Carro de compra</title>
+</h:head>
+<h:body>
+<h:link outcome="listaTemas" value="Seguir comprando" />
+<h1>Carro de compra</h1>
+<h:messages globalOnly="true" />
+<h:form>
+    <h:dataTable value="#{sesionMB.librosEnCarro}" var="linea" rendered="#{not sesionMB.carroVacio}">
+        <h:column>
+            <f:facet name="header">Libro</f:facet>
+            <h:outputText value="#{linea.libro.titulo}" />
+        </h:column>
+        <h:column>
+            <f:facet name="header">Precio</f:facet>
+            <h:outputText value="#{linea.libro.precio}">
+                <f:convertNumber type="currency" currencySymbol="€" />
+            </h:outputText>
+        </h:column>
+        <h:column>
+            <f:facet name="header">Cantidad</f:facet>
+            <h:inputText value="#{linea.cantidad}" size="3" />
+        </h:column>
+        <h:column>
+            <f:facet name="header">Subtotal</f:facet>
+            <h:outputText value="#{linea.subtotal}">
+                <f:convertNumber type="currency" currencySymbol="€" />
+            </h:outputText>
+        </h:column>
+        <h:column>
+            <f:facet name="header">Acciones</f:facet>
+            <h:commandButton value="Actualizar" action="#{sesionMB.actualizarLinea(linea.libro.id, linea.cantidad)}" />
+            <h:commandButton value="Eliminar" action="#{sesionMB.eliminarDelCarro(linea.libro.id)}" immediate="true" />
+        </h:column>
+    </h:dataTable>
+    <h:panelGroup rendered="#{sesionMB.carroVacio}">
+        <p>El carro está vacío.</p>
+    </h:panelGroup>
+    <h:panelGroup rendered="#{not sesionMB.carroVacio}">
+        <p>Total: <strong>
+            <h:outputText value="#{sesionMB.totalCarro}">
+                <f:convertNumber type="currency" currencySymbol="€" />
+            </h:outputText>
+        </strong></p>
+        <h:commandButton value="Hacer pedido" action="#{sesionMB.irAConfirmacionPedido}" />
+    </h:panelGroup>
+</h:form>
+</h:body>
+</html>
