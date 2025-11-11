@@ -1,75 +1,53 @@
-<?xml version='1.0' encoding='UTF-8' ?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:h="http://xmlns.jcp.org/jsf/html" xmlns:f="http://java.sun.com/jsf/core">
-    <h:head>
-        <title>Carro de la compra</title>
-    </h:head>
-    <h:body>
-        <center>
-            <br/>
-            <h:graphicImage  width="300" value="resources/images/libros.jpg" alt="libros"/>
-            <br/>
-            <h1>Tienda de libros</h1>   
-            <h:outputText   rendered="#{sesionMB.logged}" value="Usuario: #{sesionMB.cliente.nombre},         login en #{sesionMB.loginTime}"/>      
-            <br/>         
-            <br/>
-            <br/>
-            <h2>Carro de la compra:</h2>   
-            <h:form>        
-                <h:dataTable  value="#{sesionMB.carroCompra.librosEnCarro}" cellspacing="30" var="libroEnCarro" >                   
-                    <h:column>   
-                        <f:facet name="header">
-                            <h:outputText value="Título"/>
-                        </f:facet>                   
-                        <h:outputText value="#{libroEnCarro.libro.titulo}"/>
-                    </h:column>
-                    <h:column>
-                        <f:facet name="header">
-                            <h:outputText value="Autor"/>
-                        </f:facet>
-                        <h:outputText value="#{libroEnCarro.libro.autor}"/>
-                    </h:column>           
-                    <h:column>
-                        <f:facet name="header">
-                            <h:outputText value="Precio"/>
-                        </f:facet>
-                        <h:outputText value="#{libroEnCarro.libro.precio}"/>
-                    </h:column>            
-                    <h:column>
-                        <f:facet name="header">
-                            <h:outputText value="Cantidad"/>
-                        </f:facet>
-                        <h:outputText value="#{libroEnCarro.cantidad}"/>
-                    </h:column>
-                    <h:column>
-                        <f:facet name="header">
-                            <h:outputText value="SubTotal"/>
-                        </f:facet>
-                        <h:outputText value="#{libroEnCarro.subTotal} euros"/>                    
-                    </h:column>            
-                    <f:facet name="footer">
-                        <h:outputText value="Total: #{sesionMB.carroCompra.total} euros"/>
-                    </f:facet>                                   
-                </h:dataTable>                
-                <br/>  
-                <h:commandButton rendered="#{sesionMB.logged}" value="Hacer pedido" action="pedido"/>            
-                <br/>  
-                <br/>  
-                <br/>  
-                <h:commandButton value="Vaciar el carro" action="#{sesionMB.carroCompra.vaciaCarro()}"/>            
-                <br/>   
-                <h:panelGrid columns="5" cellspacing="30">
-                    <h:commandLink rendered="#{sesionMB.logged}" value="Ver pedidos"  action="listaPedidos"/>                          
-                    <h:commandLink value="Libros de #{sesionMB.tema.nombre}" action="listaLibros"/>    
-                    <h:commandLink  value="Inicio"  action="inicio"/>                
-                    <h:commandLink value="Catalogo" action="listaTemas"/> 
-                    <h:commandLink rendered="#{sesionMB.logged}" value="Logout"  action="#{sesionMB.logout()}"/>        
-                    <h:commandLink rendered="#{!sesionMB.logged}" value="Login"  action="login"/>     
-                </h:panelGrid> 
-            </h:form>            
-            <br/>
-            <i>IST: tienda de libros</i>
-        </center>
-    </h:body>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core">
+<h:head>
+    <title>Carro de compra</title>
+</h:head>
+<h:body>
+<h:link outcome="listaTemas" value="Seguir comprando" />
+<h1>Carro de compra</h1>
+<h:messages globalOnly="true" />
+<h:form>
+    <h:dataTable value="#{sesionMB.librosEnCarro}" var="linea" rendered="#{not sesionMB.carroVacio}">
+        <h:column>
+            <f:facet name="header">Libro</f:facet>
+            <h:outputText value="#{linea.libro.titulo}" />
+        </h:column>
+        <h:column>
+            <f:facet name="header">Precio</f:facet>
+            <h:outputText value="#{linea.libro.precio}">
+                <f:convertNumber type="currency" currencySymbol="€" />
+            </h:outputText>
+        </h:column>
+        <h:column>
+            <f:facet name="header">Cantidad</f:facet>
+            <h:inputText value="#{linea.cantidad}" size="3" />
+        </h:column>
+        <h:column>
+            <f:facet name="header">Subtotal</f:facet>
+            <h:outputText value="#{linea.subtotal}">
+                <f:convertNumber type="currency" currencySymbol="€" />
+            </h:outputText>
+        </h:column>
+        <h:column>
+            <f:facet name="header">Acciones</f:facet>
+            <h:commandButton value="Actualizar" action="#{sesionMB.actualizarLinea(linea.libro.id, linea.cantidad)}" />
+            <h:commandButton value="Eliminar" action="#{sesionMB.eliminarDelCarro(linea.libro.id)}" immediate="true" />
+        </h:column>
+    </h:dataTable>
+    <h:panelGroup rendered="#{sesionMB.carroVacio}">
+        <p>El carro está vacío.</p>
+    </h:panelGroup>
+    <h:panelGroup rendered="#{not sesionMB.carroVacio}">
+        <p>Total: <strong>
+            <h:outputText value="#{sesionMB.totalCarro}">
+                <f:convertNumber type="currency" currencySymbol="€" />
+            </h:outputText>
+        </strong></p>
+        <h:commandButton value="Hacer pedido" action="#{sesionMB.irAConfirmacionPedido}" />
+    </h:panelGroup>
+</h:form>
+</h:body>
 </html>
-

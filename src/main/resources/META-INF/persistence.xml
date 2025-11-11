@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence xmlns="http://xmlns.jcp.org/xml/ns/persistence" version="2.2">
+    <persistence-unit name="tiendaPU" transaction-type="JTA">
+        <jta-data-source>java:app/tiendaDS</jta-data-source>
+        <class>com.tienda.model.Tema</class>
+        <class>com.tienda.model.Libro</class>
+        <class>com.tienda.model.Cliente</class>
+        <class>com.tienda.model.Pedido</class>
+        <class>com.tienda.model.LibroVendido</class>
+        <class>com.tienda.model.Grupo</class>
+        <properties>
+            <property name="jakarta.persistence.schema-generation.database.action" value="none" />
+        </properties>
+    </persistence-unit>
+</persistence>

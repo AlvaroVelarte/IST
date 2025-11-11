@@ -1,30 +1,39 @@
 package entidades;
 
 import java.io.Serializable;
-import javax.persistence.CascadeType;
+import java.math.BigDecimal;
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.Table;
 
-/**
- *
- * @author jrvidal
- */
 @Entity
+@Table(name = "LIBROVENDIDO")
 public class LibroVendido implements Serializable {
 
     private static final long serialVersionUID = 1L;
+
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
-    @ManyToOne
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "pedido_id")
     private Pedido pedido;
-    @ManyToOne(cascade = CascadeType.ALL)
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "libro_id")
     private Libro libro;
-    private int cantidad;
-    private float importe;
+
+    @Column(nullable = false)
+    private Integer cantidad;
+
+    @Column(nullable = false, precision = 12, scale = 2)
+    private BigDecimal importe;
 
     public Long getId() {
         return id;
@@ -50,50 +59,19 @@ public class LibroVendido implements Serializable {
         this.libro = libro;
     }
 
-    public int getCantidad() {
+    public Integer getCantidad() {
         return cantidad;
     }
 
-    public void setCantidad(int cantidad) {
+    public void setCantidad(Integer cantidad) {
         this.cantidad = cantidad;
     }
 
-    @Override
-    public int hashCode() {
-        int hash = 0;
-        hash += (id != null ? id.hashCode() : 0);
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object object) {
-        // TODO: Warning - this method won't work in the case the id fields are not set
-        if (!(object instanceof LibroVendido)) {
-            return false;
-        }
-        LibroVendido other = (LibroVendido) object;
-        if ((this.id == null && other.id != null) || (this.id != null && !this.id.equals(other.id))) {
-            return false;
-        }
-        return true;
-    }
-
-    @Override
-    public String toString() {
-        return "datos.LibroVendido[ id=" + id + " ]";
-    }
-
-    /**
-     * @return the importe
-     */
-    public float getImporte() {
+    public BigDecimal getImporte() {
         return importe;
     }
 
-    /**
-     * @param importe the importe to set
-     */
-    public void setImporte(float importe) {
+    public void setImporte(BigDecimal importe) {
         this.importe = importe;
     }
 }

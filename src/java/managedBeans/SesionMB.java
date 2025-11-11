@@ -1,196 +1,318 @@
 package managedBeans;
 
 import enterpriseBeans.CarroCompraEJB;
+import enterpriseBeans.CarroCompraEJB.LibroEnCarro;
 import enterpriseBeans.CatalogoEJB;
 import enterpriseBeans.ClienteEJB;
 import entidades.Cliente;
 import entidades.Libro;
+import entidades.Pedido;
 import entidades.Tema;
 import java.io.Serializable;
-import java.util.Calendar;
-import java.util.GregorianCalendar;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import javax.ejb.EJB;
 import javax.enterprise.context.SessionScoped;
+import javax.faces.application.FacesMessage;
+import javax.faces.context.ExternalContext;
+import javax.faces.context.FacesContext;
 import javax.inject.Named;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
 
-/**
- *
- * @author jrvidal
- */
-@Named(value = "sesionMB")
+@Named("sesionMB")
 @SessionScoped
 public class SesionMB implements Serializable {
 
-    @EJB
-    private ClienteEJB clienteEJB;
-    private Cliente cliente;
-    private String errorMessage;
-    private String nombre;
-    private String mail;
-    private String direccion;
-    private String login;
-    private String password;
-    private String password2;
+    private static final long serialVersionUID = 1L;
+    private static final DateTimeFormatter LOGIN_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy, HH:mm");
+    private static final DateTimeFormatter PEDIDO_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+
     @EJB
     private CatalogoEJB catalogoEJB;
-    private Tema tema;
-    private Libro libro;
+
     @EJB
     private CarroCompraEJB carroCompraEJB;
-    private String loginTime;
-    String paginaAnterior = "inicio";
 
-    public String paginaAnterior() {
-        return paginaAnterior;
+    @EJB
+    private ClienteEJB clienteEJB;
+
+    private Tema temaSeleccionado;
+    private Libro libroSeleccionado;
+    private Cliente clienteAutenticado;
+
+    private String login;
+    private String password;
+
+    private String nombre;
+    private String direccion;
+    private String mail;
+    private String passwordRegistro;
+    private String passwordConfirmacion;
+
+    private boolean confirmarPedidoPendiente;
+    private LocalDateTime loginTimestamp;
+
+    public List<Tema> getTemas() {
+        return catalogoEJB.getTemas();
+    }
+
+    public String verTema(Tema tema) {
+        this.temaSeleccionado = tema;
+        return "listaLibros?faces-redirect=true";
+    }
+
+    public Tema getTemaSeleccionado() {
+        return temaSeleccionado;
+    }
+
+    public List<Libro> getLibrosDelTema() {
+        return catalogoEJB.getLibros(temaSeleccionado);
+    }
+
+    public String verLibro(Libro libro) {
+        this.libroSeleccionado = catalogoEJB.getDetallesLibro(libro);
+        return "detallesLibro?faces-redirect=true";
+    }
+
+    public Libro getLibroSeleccionado() {
+        return libroSeleccionado;
+    }
+
+    public String agregarAlCarro(Libro libro) {
+        carroCompraEJB.addLibro(libro);
+        return "carroCompra?faces-redirect=true";
+    }
+
+    public List<LibroEnCarro> getLibrosEnCarro() {
+        return carroCompraEJB.getLibros();
+    }
+
+    public BigDecimal getTotalCarro() {
+        return carroCompraEJB.getTotal();
+    }
+
+    public String irAlCarro() {
+        return "carroCompra?faces-redirect=true";
+    }
+
+    public String actualizarLinea(Long libroId, int cantidad) {
+        carroCompraEJB.actualizarCantidad(libroId, cantidad);
+        return null;
+    }
+
+    public String eliminarDelCarro(Long libroId) {
+        carroCompraEJB.eliminarLibro(libroId);
+        return null;
+    }
+
+    public boolean isCarroVacio() {
+        return carroCompraEJB.estaVacio();
+    }
+
+    public String irAConfirmacionPedido() {
+        if (isCarroVacio()) {
+            FacesContext.getCurrentInstance().addMessage(null,
+                    new FacesMessage(FacesMessage.SEVERITY_WARN, "El carro está vacío", null));
+            return null;
+        }
+        if (!isAutenticado()) {
+            confirmarPedidoPendiente = true;
+            return "login?faces-redirect=true";
+        }
+        return "pedido?faces-redirect=true";
+    }
+
+    public String confirmarPedido() {
+        FacesContext context = FacesContext.getCurrentInstance();
+        if (!isAutenticado()) {
+            context.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                    "Debe iniciar sesión antes de confirmar el pedido", null));
+            return "login?faces-redirect=true";
+        }
+        try {
+            Pedido pedido = carroCompraEJB.confirmarPedido(clienteAutenticado);
+            clienteAutenticado = clienteEJB.findCliente(clienteAutenticado.getLogin()).orElse(clienteAutenticado);
+            context.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO,
+                    "Pedido " + pedido.getId() + " registrado", null));
+            context.getExternalContext().getFlash().setKeepMessages(true);
+            return "listaPedidos?faces-redirect=true";
+        } catch (Exception ex) {
+            context.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, ex.getMessage(), null));
+            return null;
+        }
+    }
+
+    public String cancelarConfirmacion() {
+        confirmarPedidoPendiente = false;
+        return "carroCompra?faces-redirect=true";
+    }
+
+    public List<Pedido> getPedidosCliente() {
+        return clienteEJB.obtenerPedidosCliente(clienteAutenticado);
     }
 
     public String login() {
-        cliente = clienteEJB.login(login, password);
-        if (isLogged()) {
-            GregorianCalendar calendar = new GregorianCalendar();
-            loginTime = calendar.get(Calendar.DAY_OF_MONTH) + "/" + calendar.get(Calendar.MONTH) + "/" + calendar.get(Calendar.YEAR) + ",  "
-                    + calendar.get(Calendar.HOUR_OF_DAY) + ":" + calendar.get(Calendar.MINUTE);
-            return paginaAnterior;
-        } else {
-            return "";
+        FacesContext context = FacesContext.getCurrentInstance();
+        ExternalContext external = context.getExternalContext();
+        HttpServletRequest request = (HttpServletRequest) external.getRequest();
+        try {
+            clienteAutenticado = clienteEJB.login(login, password, request);
+            external.getFlash().setKeepMessages(true);
+            context.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO,
+                    "Bienvenido " + clienteAutenticado.getNombre(), null));
+            limpiarCredenciales();
+            loginTimestamp = LocalDateTime.now();
+            if (confirmarPedidoPendiente) {
+                confirmarPedidoPendiente = false;
+                return "pedido?faces-redirect=true";
+            }
+            return "inicio?faces-redirect=true";
+        } catch (Exception ex) {
+            context.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, ex.getMessage(), null));
+            return null;
         }
     }
 
     public String logout() {
-        clienteEJB.logout();
-        cliente = null;
-        carroCompraEJB.vaciaCarro();       
-        return paginaAnterior = "inicio";
+        FacesContext context = FacesContext.getCurrentInstance();
+        HttpServletRequest request = (HttpServletRequest) context.getExternalContext().getRequest();
+        try {
+            clienteEJB.logout(request);
+        } catch (ServletException ex) {
+            // Ignorar
+        }
+        clienteAutenticado = null;
+        confirmarPedidoPendiente = false;
+        carroCompraEJB.vaciar();
+        loginTimestamp = null;
+        return "inicio?faces-redirect=true";
     }
 
-    public String registra() {
-        errorMessage = clienteEJB.registra(nombre, direccion, mail, login, password, password2);
-        if (errorMessage.equals("noError")) {
-            return login();
-        } else {
-            return ("registroError");
+    public String irARegistro() {
+        return "registro?faces-redirect=true";
+    }
+
+    public String registrar() {
+        FacesContext context = FacesContext.getCurrentInstance();
+        if (passwordRegistro == null || !passwordRegistro.equals(passwordConfirmacion)) {
+            context.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                    "Las contraseñas no coinciden", null));
+            return null;
+        }
+        try {
+            Cliente nuevo = clienteEJB.registrar(nombre, direccion, mail, login, passwordRegistro);
+            limpiarFormularioRegistro();
+            clienteAutenticado = clienteEJB.login(nuevo.getLogin(), passwordRegistro,
+                    (HttpServletRequest) context.getExternalContext().getRequest());
+            loginTimestamp = LocalDateTime.now();
+            if (confirmarPedidoPendiente) {
+                confirmarPedidoPendiente = false;
+                return "pedido?faces-redirect=true";
+            }
+            context.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO,
+                    "Registro completado", null));
+            context.getExternalContext().getFlash().setKeepMessages(true);
+            return "inicio?faces-redirect=true";
+        } catch (Exception ex) {
+            context.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, ex.getMessage(), null));
+            context.getExternalContext().getFlash().setKeepMessages(true);
+            return "registroError?faces-redirect=true";
         }
     }
 
-    public String ponEnCarro() {
-        carroCompraEJB.ponEnCarro(libro);
-        return paginaAnterior = "carroCompra";
+    public boolean isAutenticado() {
+        return clienteAutenticado != null;
     }
 
-    public String vaciaCarro() {
-        carroCompraEJB.vaciaCarro();
-        return "listaTemas";
+    public Cliente getClienteAutenticado() {
+        return clienteAutenticado;
     }
 
-    public String confirmaPedido() {
-        carroCompraEJB.confirmaPedido(cliente);
-        return paginaAnterior = "listaPedidos";
+    public String getNombreCliente() {
+        return isAutenticado() ? clienteAutenticado.getNombre() : null;
     }
 
-    public String getErrorMessage() {
-        return errorMessage;
-    }
-
-    public List<Tema> getTemas() {
-        return catalogoEJB.todosLosTemas();
-    }
-
-    public String verTema(Tema tema) {
-        this.tema = tema;
-        return paginaAnterior = "listaLibros";
-    }
-
-    public String verLibro(Libro libro) {
-        this.libro = libro;
-        return paginaAnterior = "detallesLibro";
-    }
-
-    public Cliente getCliente() {
-        return cliente;
-    }
-
-    public String getLoginTime() {
-        return loginTime;
-    }
-
-    public boolean isLogged() {
-        return cliente != null;
-    }
-
-    public String getNombre() {
-        if (isLogged()) {
-            return cliente.getNombre();
-        } else {
-            return "";
+    public String getLoginTimestamp() {
+        if (!isAutenticado()) {
+            return null;
         }
+        return LOGIN_FORMATTER.format(loginTimestamp != null ? loginTimestamp : LocalDateTime.now());
     }
 
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
+    public String formatearFecha(LocalDateTime fecha) {
+        return fecha == null ? "" : PEDIDO_FORMATTER.format(fecha);
+    }
+
+    private void limpiarCredenciales() {
+        login = null;
+        password = null;
+    }
+
+    private void limpiarFormularioRegistro() {
+        nombre = null;
+        direccion = null;
+        mail = null;
+        login = null;
+        passwordRegistro = null;
+        passwordConfirmacion = null;
     }
 
     public String getLogin() {
-        if (isLogged()) {
-            return cliente.getLogin();
-        } else {
-            return "";
-        }
+        return login;
     }
 
     public void setLogin(String login) {
         this.login = login;
     }
 
+    public String getPassword() {
+        return password;
+    }
+
     public void setPassword(String password) {
         this.password = password;
     }
 
-    public String getPassword() {
-        return "";
+    public String getNombre() {
+        return nombre;
     }
 
-    public String getPassword2() {
-        return "";
-    }
-
-    public void setPassword2(String password2) {
-        this.password2 = password2;
-    }
-
-    public String getMail() {
-        if (isLogged()) {
-            return cliente.getMail();
-        } else {
-            return "";
-        }
-    }
-
-    public void setMail(String mail) {
-        this.mail = mail;
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
     }
 
     public String getDireccion() {
-        if (isLogged()) {
-            return cliente.getDireccion();
-        } else {
-            return "";
-        }
+        return direccion;
     }
 
     public void setDireccion(String direccion) {
         this.direccion = direccion;
     }
 
-    public Tema getTema() {
-        return tema;
+    public String getMail() {
+        return mail;
     }
 
-    public Libro getLibro() {
-        return libro;
+    public void setMail(String mail) {
+        this.mail = mail;
     }
 
-    public CarroCompraEJB getCarroCompra() {
-        return carroCompraEJB;
+    public String getPasswordRegistro() {
+        return passwordRegistro;
+    }
+
+    public void setPasswordRegistro(String passwordRegistro) {
+        this.passwordRegistro = passwordRegistro;
+    }
+
+    public String getPasswordConfirmacion() {
+        return passwordConfirmacion;
+    }
+
+    public void setPasswordConfirmacion(String passwordConfirmacion) {
+        this.passwordConfirmacion = passwordConfirmacion;
     }
 }
